@@ -4,44 +4,48 @@ import okhttp3.*;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class AmazonService {
+    public static final Pattern PRODUCT_PATTERN = Pattern.compile("<span class=\\\"a-size-medium a-color-base a-text-normal\\\">([^<]+)</span> </a> </h2></div><div class=\\\"a-section a-spacing-none a-spacing-top-micro\\\"><div class=\\\"a-row a-size-small\\\"><span aria-label=\\\"([^\\\"]+)\\\"><span.*<span class=\\\"a-offscreen\\\">([^<]+)</span>");
 
-    public String searchProducts(String keyword) {
-        return "Searched for:" + keyword;
+    public String searchProducts(String keyword) throws IOException {
+        return parseProductHtml(getProductHtml(keyword));
     }
+    private String parseProductHtml(String html) {
+        String res = "";
+        Matcher matcher = PRODUCT_PATTERN.matcher(html);
+        while (matcher.find()) {
+            res += matcher.group(1) + " - " + matcher.group(2) + ", price:" + matcher.group(3) + "<br>\n";
+        }
+        return res;
+    }
+
     private String getProductHtml(String keyword) throws IOException {
-        OkHttpClient client = new OkHttpClient().newBuilder()
-                .build();
-        MediaType mediaType = MediaType.parse("text/plain");
-        RequestBody body = RequestBody.create(mediaType, "");
+        OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
-                .url("https://www.amazon.com/s?i=aps&k=ipod&ref=nb_sb_noss&url=search-alias%3Daps")
-                .method("GET", body)
+                .url("https://www.amazon.com/s?k=" + keyword +"&crid=1FVOAPA9AELRZ&sprefix=ipod%2Caps%2C181&ref=nb_sb_noss_1")
+                .method("GET", null)
                 .addHeader("authority", "www.amazon.com")
-                .addHeader("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
-                .addHeader("accept-language", "en-US,en;q=0.9")
-                .addHeader("cookie", "aws-ubid-main=141-3677424-7760543; aws-account-alias=995553441267; remember-account=false; aws-userInfo=%7B%22arn%22%3A%22arn%3Aaws%3Aiam%3A%3A995553441267%3Auser%2Fmaayanj%22%2C%22alias%22%3A%22995553441267%22%2C%22username%22%3A%22maayanj%22%2C%22keybase%22%3A%22nVXfCGiwcBBYJmWFEzsZt0gji4xiPCTLxBLXnPnfjj8%5Cu003d%22%2C%22issuer%22%3A%22http%3A%2F%2Fsignin.aws.amazon.com%2Fsignin%22%2C%22signinType%22%3A%22PUBLIC%22%7D; aws-userInfo-signed=eyJ0eXAiOiJKV1MiLCJrZXlSZWdpb24iOiJ1cy1lYXN0LTIiLCJhbGciOiJFUzM4NCIsImtpZCI6IjU1MWQxODhiLWI3NGItNGNhMi05ZjY1LWY1YjdhZjIyNTVhMCJ9.eyJzdWIiOiI5OTU1NTM0NDEyNjciLCJzaWduaW5UeXBlIjoiUFVCTElDIiwiaXNzIjoiaHR0cDpcL1wvc2lnbmluLmF3cy5hbWF6b24uY29tXC9zaWduaW4iLCJrZXliYXNlIjoiblZYZkNHaXdjQkJZSm1XRkV6c1p0MGdqaTR4aVBDVEx4QkxYblBuZmpqOD0iLCJhcm4iOiJhcm46YXdzOmlhbTo6OTk1NTUzNDQxMjY3OnVzZXJcL21hYXlhbmoiLCJ1c2VybmFtZSI6Im1hYXlhbmoifQ.K3-d1o5uBMBs7BItn2F1hTX9Dio6nq0baljpJV1Nnu-I9FPfHML7trXyrN7bErCaYeZX5_2RTB8TPelkpBs0xl5r6X4pEVArKxfpjVMa177m0N69aWfO_dgftJOkg3Gh; regStatus=registered; noflush_awsccs_sid=600ad48fed17adb4f79504b8445d739bead5ab922e91e9ab90bc69e397111623; aws-signer-token_eu-north-1=eyJrZXlWZXJzaW9uIjoiY3ZSblRkWDUxR0ZxeDdNTkNENG9rbnVaT3FwdDBEQmgiLCJ2YWx1ZSI6IkV6UUZCUVllb1hjR01IbVJHNG9ZRCsyd3RkQUsvZWdHN2dBV1pJYmpMVEk9IiwidmVyc2lvbiI6MX0=; session-id=140-2087831-4285329; session-id-time=2082787201l; i18n-prefs=USD; skin=noskin; ubid-main=131-8838412-2513726; session-token=Qa6MAJdFSvKcmfx4Mr7yXnmFgN+i/QhJW4y5AIUSvbmdQwEXLoWVEHhXp2Bdhw1VRbQK5ZxAPWxrTli1n3sj8bG82ySL85Q6Iq5TJKzHD1AzKewpnOxDqS74Zn9cxiPxUKQlt8VXiqXT8WRbAISmV8WHE+C5njJdXTJVhDPWEyMdhW2HLI1H9VR5ElY8jGH/H0fOy66mBD+8rzmtb0PFyczZA+6dxaREel6R5Z4vmUnol+HiWCpWfcnTk0r94se2QsIWEu/yQxW1k1JqFubQ6f+6MHNEi8EPrYWylnYQ7CPnTy8tZfcQi3pETR96HKDECS/MYpY/to62ANLbK+J7ENJhzyAmDVpD; csm-hit=tb:0YV94SM97Z4YDSC1X0EW+b-0YV94SM97Z4YDSC1X0EW|1694041737180&t:1694041737180&adb:adblk_no")
-                .addHeader("device-memory", "8")
-                .addHeader("downlink", "3")
-                .addHeader("dpr", "1")
+                .addHeader("cache-control", "max-age=0")
+                .addHeader("rtt", "100")
+                .addHeader("downlink", "10")
                 .addHeader("ect", "4g")
-                .addHeader("referer", "https://www.amazon.com/s?k=ipod&ref=nb_sb_noss")
-                .addHeader("rtt", "50")
-                .addHeader("sec-ch-device-memory", "8")
-                .addHeader("sec-ch-dpr", "1")
-                .addHeader("sec-ch-ua", "\"Not_A Brand\";v=\"99\", \"Google Chrome\";v=\"109\", \"Chromium\";v=\"109\"")
+                .addHeader("sec-ch-ua", "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"")
                 .addHeader("sec-ch-ua-mobile", "?0")
-                .addHeader("sec-ch-ua-platform", "\"Linux\"")
-                .addHeader("sec-ch-viewport-width", "748")
-                .addHeader("sec-fetch-dest", "document")
-                .addHeader("sec-fetch-mode", "navigate")
-                .addHeader("sec-fetch-site", "same-origin")
-                .addHeader("sec-fetch-user", "?1")
+                .addHeader("sec-ch-ua-platform", "\"macOS\"")
                 .addHeader("upgrade-insecure-requests", "1")
-                .addHeader("user-agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36")
-                .addHeader("viewport-width", "748")
+                .addHeader("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36")
+                .addHeader("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
+                .addHeader("sec-fetch-site", "same-origin")
+                .addHeader("sec-fetch-mode", "navigate")
+                .addHeader("sec-fetch-user", "?1")
+                .addHeader("sec-fetch-dest", "document")
+                .addHeader("referer", "https://www.amazon.com/")
+                .addHeader("accept-language", "en-US,en;q=0.9,he;q=0.8")
+                .addHeader("cookie", "session-id=131-3987483-5342545; session-id-time=2082787201l; i18n-prefs=USD; sp-cdn=\"L5Z9:IL\"; skin=noskin; ubid-main=133-9581942-3780819; session-token=9wuRyGDfGYRNIQddpLSfu/7ZXPkW7pQoYBvMwmGsIhnfY51Iqj+MGS377K23lkwtdjhFx7pU6lcOwFpb0U6WneR7bB7A16Fx7VbQbOEVXnmyIo1i6GXJCcO4dDDR8dN3t5hl/PRi/+vWZPCxL7pYX7A0IOLl74C6MykvrYSxmA29bWSf8tfTif60UEjxD0kk; csm-hit=tb:TTHKG9BMH5E1XG8YFBGP+s-PMZSXATEMDSYE2A3YAS8|1643843190534&t:1643843190534&adb:adblk_yes; session-token=\"2xJZqprgyjzxD7aWv5lvF6L2Jj6wbj75+0bl0405+iQ/teLGzDnuRJLFAIT+TZQlkgfSAzqMtgIwEeHBFVD0aip6GkUe+j61VFbW6p2RqtI4ZpKzPhLXUan7/XN3IT54f1XxTmwQcSjyB2GQ/9kA6/4K7i8kFxf9gYWBIaSqklC4vZX3A8WEtWGUcQxKUx1PP7imQpBv5nT5pijsa/fk2A==\"")
                 .build();
         Response response = client.newCall(request).execute();
         return response.body().string();
