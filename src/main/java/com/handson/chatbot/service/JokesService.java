@@ -1,7 +1,6 @@
 package com.handson.chatbot.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.*;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -20,21 +19,22 @@ public class JokesService {
             .build();
     @Autowired
     ObjectMapper om;
-//    public String searchJokes(String keyword) throws IOException {
-//        return getJokeData(getJokeId(keyword));
-//    }
-//    public Response getJokeData (String jokeId) throws IOException{
-//        MediaType mediaType = MediaType.parse("text/plain");
-//        RequestBody body = RequestBody.create(mediaType, "");
-//        Request request = new Request.Builder()
-//                .url("https://api.chucknorris.io/jokes/" + jokeId +"")
-//                .method("GET", body)
-//                .build();
-//        Response response = client.newCall(request).execute();
-////        return response;
-//        JokeData res = om.readValue(response.body().string(), JokeData.class);
-//        return res.getData.getJokes().get(0).getText();
-//    }
+    public String searchJokes(String keyword) throws IOException {
+        return getJokeData(getJokeId(keyword));
+    }
+    public String getJokeData (String jokeId) throws IOException{
+        MediaType mediaType = MediaType.parse("text/plain");
+        RequestBody body = RequestBody.create(mediaType, "");
+        Request request = new Request.Builder()
+                .url("https://api.chucknorris.io/jokes/" + jokeId +"")
+                .method("GET", body)
+                .build();
+        Response response = client.newCall(request).execute();
+//        return response;
+        JokeData res = om.readValue(response.body().string(), JokeData.class);
+        return res.getJokeInfo().get(0).getValue();
+
+    }
     public String getJokeId(String keyword) throws IOException {
 
 //        MediaType mediaType = MediaType.parse("text/plain");
@@ -68,10 +68,21 @@ public class JokesService {
             return id;
         }
     }
-
-
-
     //second call
+static class JokeData {
+        List<Joke> JokeInfo;
 
+        public List<Joke> getJokeInfo() {
+            return JokeInfo;
+        }
+       //        String value;
+        static class Joke { String value;
+
+           public String getValue() {
+               return value;
+           }
+       }
+
+    }
 
 }

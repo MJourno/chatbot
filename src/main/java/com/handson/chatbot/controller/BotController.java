@@ -28,7 +28,7 @@ public class BotController {
 
     @RequestMapping(value = "/jokes", method = RequestMethod.GET)
     public ResponseEntity<?> getJokes(@RequestParam String keyword) throws IOException {
-        return new ResponseEntity<>(jokesService.getJokeId(keyword), HttpStatus.OK);
+        return new ResponseEntity<>(jokesService.searchJokes(keyword), HttpStatus.OK);
     }
 }
 
