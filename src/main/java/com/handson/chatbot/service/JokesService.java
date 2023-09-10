@@ -20,21 +20,21 @@ public class JokesService {
     @Autowired
     ObjectMapper om;
     public String searchJokes(String keyword) throws IOException {
-        return getJokeData(getJokeId(keyword));
+        return getJokeId(keyword);
     }
-    public String getJokeData (String jokeId) throws IOException{
-        MediaType mediaType = MediaType.parse("text/plain");
-        RequestBody body = RequestBody.create(mediaType, "");
-        Request request = new Request.Builder()
-                .url("https://api.chucknorris.io/jokes/" + jokeId +"")
-                .method("GET", body)
-                .build();
-        Response response = client.newCall(request).execute();
-//        return response;
-        JokeData res = om.readValue(response.body().string(), JokeData.class);
-        return res.getJokeInfo().get(0).getValue();
-
-    }
+//    public String getJokeData (String jokeId) throws IOException{
+//        MediaType mediaType = MediaType.parse("text/plain");
+//        RequestBody body = RequestBody.create(mediaType, "");
+//        Request request = new Request.Builder()
+//                .url("https://api.chucknorris.io/jokes/" + jokeId +"")
+//                .method("GET", body)
+//                .build();
+//        Response response = client.newCall(request).execute();
+////        return response;
+//        JokeData res = om.readValue(response.body().string(), JokeData.class);
+//        return res.getJokeInfo().get(0).getValue();
+//
+//    }
     public String getJokeId(String keyword) throws IOException {
 
 //        MediaType mediaType = MediaType.parse("text/plain");
@@ -48,7 +48,7 @@ public class JokesService {
         Response response = client.newCall(request).execute();
         JokesResponse res = om.readValue(response.body().string(), JokesResponse.class);
 //        String jokeId = res.getResult().get(0).getId();
-                return res.getResult().get(0).getId();
+                return res.getResult().get(0).getValue();
 //        return Integer.parseInt(jokeId);
 //        Response response = client.newCall(request).execute();
 //        return response.body().string();
@@ -63,6 +63,11 @@ public class JokesService {
     }
     static class JokesObject {
         String id;
+        String value;
+
+        public String getValue() {
+            return value;
+        }
 
         public String getId() {
             return id;
